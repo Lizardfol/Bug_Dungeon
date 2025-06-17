@@ -16,3 +16,5 @@ Engaging Story & Rules Screen: Dive into the lore and understand your quest befo
 
 Why Bug Dungeon?
 This project combines classic dungeon crawler vibes with real coding puzzles — perfect for programmers who love games and gamers who want to sharpen their Python skills. It’s designed to be approachable but clever, blending logic, cryptography, and a bit of monster mayhem.
+
+Creator:Torok Marton aka LizardFolk

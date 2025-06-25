@@ -43,6 +43,7 @@ latogatott_szobak = set()
 teljesitett_szobak = set()
 szorny_eletero = 0
 jatekos_kulcsok = 0
+jatekos_ero = 1  # Player strength multiplier
 teljes_kepernyo = False
 zene_mehet = False
 jelenlegi_szam = None
@@ -63,12 +64,12 @@ for nev in monster_nevek:
 
 barlang_terkep = [
     [0, 0, 0, 0, 0, 0, 0],
-    [0, 1, 1, 2, 1, 3, 0],
+    [0, 1, 1, 2, 1, 3, 1],
     [0, 2, 0, 1, 0, 2, 0],
-    [0, 1, 1, 2, 3, 1, 0],
-    [0, 3, 0, 1, 0, 4, 0],
-    [0, 1, 2, 1, 2, 1, 0],
-    [0, 0, 0, 0, 0, 0, 0]
+    [1, 1, 1, 2, 3, 1, 0],
+    [1, 3, 0, 1, 0, 4, 0],
+    [0, 1, 2, 1, 2, 1, 1],
+    [0, 0, 3, 0, 0, 0, 3]
 ]
 
 szoba_tipusok = {
@@ -615,6 +616,15 @@ def terkep_rajzol():
     kepernyo.blit(kulcs_szoveg, (30, 30))
     kepernyo.blit(szobak_szoveg, (KEZELO_SZELESSEG - szobak_szoveg.get_width() - 30, 30))
     
+    # Display player strength
+    strength_text = fo_font.render(f"Strength: x{jatekos_ero}", True, KIHANGSULY)
+    kepernyo.blit(strength_text, (30, 60))
+    
+    # Upgrade prompt
+    if jatekos_kulcsok >= 8 and jatekos_ero == 1:
+        upgrade_text = fo_font.render("Press U to upgrade strength (8 keys)", True, KIHANGSULY)
+        kepernyo.blit(upgrade_text, (KEZELO_SZELESSEG//2 - upgrade_text.get_width()//2, KEZELO_MAGASSAG - 50))
+    
     cella_meret = 70
     terkep_szelesseg = len(barlang_terkep[0]) * cella_meret
     terkep_magassag = len(barlang_terkep) * cella_meret
@@ -893,6 +903,7 @@ def gyozelem_rajzol():
         f"Rooms Explored: {len(latogatott_szobak)}",
         f"Monsters Defeated: {len(teljesitett_szobak)}",
         f"Keys Collected: {jatekos_kulcsok}",
+        f"Player Strength: x{jatekos_ero}",
         "",
         "The Bug Dungeon has been cleansed of",
         "malicious code creatures... for now."
@@ -909,7 +920,7 @@ def gyozelem_rajzol():
     kepernyo.blit(ujra, (KEZELO_SZELESSEG//2 - ujra.get_width()//2, KEZELO_MAGASSAG - 85))
 
 def kod_ertekeles():
-    global eredmeny_uzenet, rejtveny_megoldva, jelenlegi_szorny
+    global eredmeny_uzenet, rejtveny_megoldva, jelenlegi_szorny, jatekos_kulcsok, barlang_terkep, jatekos_helyzete, teljesitett_szobak, jatekos_ero
     
     try:
         if jelenlegi_rejtveny["name"] == "Rot13 Cipher":
@@ -926,21 +937,36 @@ def kod_ertekeles():
             rejtveny_megoldva = False
         
         if rejtveny_megoldva and jelenlegi_szorny:
-            jelenlegi_szorny["health"] -= 3
+            # Calculate damage with strength multiplier
+            sebzes = 3 * jatekos_ero
+            jelenlegi_szorny["health"] -= sebzes
+            
+            # Check if monster is defeated
             if jelenlegi_szorny["health"] <= 0:
-                teljesitett_szobak.add((jatekos_helyzete[0], jatekos_helyzete[1]))
+                x, y = jatekos_helyzete
+                teljesitett_szobak.add((x, y))
+                
+                # Add 1-2 keys
+                kulcsok = random.randint(1, 2)
+                jatekos_kulcsok += kulcsok
+                eredmeny_uzenet += f" Monster defeated! +{kulcsok} keys!"
+                
+                # Change room to empty chamber
+                if 0 <= y < len(barlang_terkep) and 0 <= x < len(barlang_terkep[0]):
+                    barlang_terkep[y][x] = 1
     
     except Exception as e:
         eredmeny_uzenet = f"Error: {str(e)}"
         rejtveny_megoldva = False
 
 def jatek_inditas():
-    global jelenlegi_allapot, jatekos_helyzete, latogatott_szobak, teljesitett_szobak, jatekos_kulcsok
+    global jelenlegi_allapot, jatekos_helyzete, latogatott_szobak, teljesitett_szobak, jatekos_kulcsok, jatekos_ero
     jelenlegi_allapot = TERKEP
     jatekos_helyzete = [1, 1]
     latogatott_szobak = set()
     teljesitett_szobak = set()
     jatekos_kulcsok = 0
+    jatekos_ero = 1  # Reset strength
     latogatott_szobak.add((1, 1))
     
     for szorny in szornyek:
@@ -1039,13 +1065,14 @@ def jatekos_mozgatasa(dx, dy):
 
 def jatek_alaphelyzet():
     global jelenlegi_allapot, jatekos_helyzete, latogatott_szobak, teljesitett_szobak, jatekos_kulcsok
-    global jelenlegi_szorny, jelenlegi_rejtveny, szorny_eletero, rejtveny_megoldva, eredmeny_uzenet, kurzor_x
+    global jelenlegi_szorny, jelenlegi_rejtveny, szorny_eletero, rejtveny_megoldva, eredmeny_uzenet, kurzor_x, jatekos_ero
     
     jelenlegi_allapot = MENU    
     jatekos_helyzete = [1, 1]
     latogatott_szobak = set()
     teljesitett_szobak = set()
     jatekos_kulcsok = 0
+    jatekos_ero = 1  # Reset strength
     jelenlegi_szorny = None
     jelenlegi_rejtveny = None
     szorny_eletero = 0
@@ -1129,6 +1156,11 @@ while fut:
                     jatekos_mozgatasa(1, 0)
                 elif esemeny.key == K_RETURN:
                     jelenlegi_allapot = SZOBA
+                # Strength upgrade
+                elif esemeny.key == K_u:
+                    if jatekos_kulcsok >= 8 and jatekos_ero == 1:
+                        jatekos_ero = 2  # Double damage
+                        jatekos_kulcsok -= 8  # Deduct keys
                 
             elif jelenlegi_allapot == SZOBA:
                 if esemeny.key == K_SPACE:
